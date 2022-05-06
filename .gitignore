@@ -6,3 +6,6 @@ build
 
 #Ignore vm directory
 vm
+
+#Ignore IDEA folder
+.idea
