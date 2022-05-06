@@ -6,19 +6,56 @@ import java.util.Objects;
 
 public class TreeNode<T> {
 
-    public final List<TreeNode<T>> childred = new LinkedList<>();
-    public T obj;
+    private List<TreeNode<T>> leaves;
+    private T droplet;
+
+    public TreeNode() {
+        this.leaves = new LinkedList<>();
+    }
+
+    public TreeNode(T droplet) {
+        this(new LinkedList<>(), droplet);
+    }
+
+    public TreeNode(List<TreeNode<T>> leaves, T droplet) {
+        this.leaves = leaves;
+        this.droplet = droplet;
+    }
+
+    public List<TreeNode<T>> getLeaves() {
+        return leaves;
+    }
+
+    public void setLeaves(List<TreeNode<T>> leaves) {
+        this.leaves = leaves;
+    }
+
+    public T getDroplet() {
+        return droplet;
+    }
+
+    public void setDroplet(T droplet) {
+        this.droplet = droplet;
+    }
+
+    public boolean hasLeaves() {
+        return leaves.size() > 0;
+    }
+
+    public Tree newTree() {
+        return new Tree(this);
+    }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TreeNode<?> treeNode = (TreeNode<?>) o;
-        return Objects.equals(childred, treeNode.childred) && Objects.equals(obj, treeNode.obj);
+        return Objects.equals(leaves, treeNode.leaves) && Objects.equals(droplet, treeNode.droplet);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(childred, obj);
+        return Objects.hash(leaves, droplet);
     }
 }

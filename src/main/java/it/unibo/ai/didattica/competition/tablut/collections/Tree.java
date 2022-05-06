@@ -4,10 +4,14 @@ import java.util.Objects;
 
 public class Tree<T> {
 
-    public final TreeNode<T> root;
+    private TreeNode<T> root;
 
     public Tree(TreeNode<T> root) {
         this.root = root;
+    }
+
+    public Tree() {
+        this(new TreeNode<>());
     }
 
     @Override
