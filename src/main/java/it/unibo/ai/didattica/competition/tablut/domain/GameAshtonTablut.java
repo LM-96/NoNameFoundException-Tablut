@@ -1,10 +1,12 @@
 package it.unibo.ai.didattica.competition.tablut.domain;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
@@ -12,6 +14,10 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
 import it.unibo.ai.didattica.competition.tablut.exceptions.*;
+import it.unibo.ai.didattica.competition.tablut.intelligence.heuristic.HeuristicVisitable;
+import it.unibo.ai.didattica.competition.tablut.woods.LeavesGenerator;
+import it.unibo.ai.didattica.competition.tablut.intelligence.ReachableState;
+import it.unibo.ai.didattica.competition.tablut.woods.*;
 
 /**
  * 
@@ -21,7 +27,9 @@ import it.unibo.ai.didattica.competition.tablut.exceptions.*;
  * @author A. Piretti, Andrea Galassi
  *
  */
-public class GameAshtonTablut implements Game {
+public class GameAshtonTablut
+		implements Game,  LeavesGenerator<HeuristicVisitable<ReachableState>>
+{
 
 	/**
 	 * Number of repeated states that can occur before a draw
@@ -747,6 +755,342 @@ public class GameAshtonTablut implements Game {
 	@Override
 	public void endGame(State state) {
 		this.loggGame.fine("Stato:\n"+state.toString());
+	}
+
+    /**
+     * Computes a list of al possible actions and reachable states
+     * starting from the <tt>state</tt> passed as argument
+     * @param state the state to analyze
+     * @return a {@link java.util.List} containing all the possible
+     * {@link ReachableState} starting from the <tt>state</tt>
+     */
+	public List<ReachableState> computeReachableStates(State state) {
+		State.Turn turn = state.getTurn();
+
+		List<ReachableState> possibleActions = new LinkedList<>();
+
+		for (int i = 0; i < state.getBoard().length; i++) {
+			for (int j = 0; j < state.getBoard().length; j++) {
+
+				// if pawn color  is equal of turn color
+				if (state.getPawn(i, j).toString().equals(turn.toString()) ||
+						(state.getPawn(i, j).equals(State.Pawn.KING) && turn.equals(State.Turn.WHITE)) ) {
+
+					// search on top of pawn
+					for (int k=i-1; k>=0; k--) {
+
+						// break if pawn is out of citadels and it is moving on a citadel
+						if (!citadels.contains(state.getBox(i, j)) && citadels.contains(state.getBox(k, j))) {
+							break;
+						}
+
+						// check if we are moving on a empty cell
+						else if (state.getPawn(k, j).equalsPawn(State.Pawn.EMPTY.toString())) {
+
+							String from = state.getBox(i, j);
+							String to = state.getBox(k, j);
+
+							Action action = null;
+							try {
+								action = new Action(from, to, turn);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+
+							// check if action is admissible and if it is, add it to list possibleActions
+							try {
+								checkMove(state.clone(), action);
+								possibleActions.add(new ReachableState(action, state));
+
+							} catch (Exception e) {}
+						} else {
+							// there is a pawn in the same column and it cannot be crossed
+							break;
+						}
+					}
+
+					// search on bottom of pawn
+					for (int k=i+1; k<state.getBoard().length; k++) {
+
+						// break if pawn is out of citadels and it is moving on a citadel
+						if (!citadels.contains(state.getBox(i, j)) && citadels.contains(state.getBox(k, j))) {
+							break;
+						}
+
+						// check if we are moving on a empty cell
+						else if (state.getPawn(k, j).equalsPawn(State.Pawn.EMPTY.toString())){
+
+							String from = state.getBox(i, j);
+							String to = state.getBox(k, j);
+
+							Action action = null;
+							try {
+								action = new Action(from, to, turn);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+
+							// check if action is admissible and if it is, add it to list possibleActions
+							try {
+								checkMove(state.clone(), action);
+								possibleActions.add(new ReachableState(action, state));
+
+							} catch (Exception e) {}
+						} else {
+							// there is a pawn in the same column and it cannot be crossed
+							break;
+						}
+					}
+
+					// search on left of pawn
+					for (int k=j-1; k>=0; k--) {
+
+
+						// break if pawn is out of citadels and it is moving on a citadel
+						if (!citadels.contains(state.getBox(i, j)) && citadels.contains(state.getBox(i, k))) {
+							break;
+						}
+
+						// check if we are moving on a empty cell
+						else if (state.getPawn(i, k).equalsPawn(State.Pawn.EMPTY.toString())){
+
+							String from = state.getBox(i, j);
+							String to = state.getBox(i, k);
+
+							Action action = null;
+							try {
+								action = new Action(from, to, turn);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+
+							// check if action is admissible and if it is, add it to list possibleActions
+							try {
+								checkMove(state.clone(), action);
+								possibleActions.add(new ReachableState(action, state));
+
+							} catch (Exception e) {}
+						} else {
+							// there is a pawn in the same row and it cannot be crossed
+							break;
+						}
+					}
+
+					// search on right of pawn
+					for (int k=j+1; k<state.getBoard().length; k++) {
+
+
+						// break if pawn is out of citadels and it is moving on a citadel
+						if (!citadels.contains(state.getBox(i, j)) && citadels.contains(state.getBox(i, k))) {
+							break;
+						}
+
+						// check if we are moving on a empty cell
+						else if (state.getPawn(i, k).equalsPawn(State.Pawn.EMPTY.toString())){
+
+							String from = state.getBox(i, j);
+							String to = state.getBox(i, k);
+
+							Action action = null;
+							try {
+								action = new Action(from, to, turn);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+
+							// check if action is admissible and if it is, add it to list possibleActions
+							try {
+								checkMove(state.clone(), action);
+								possibleActions.add(new ReachableState(action, state));
+
+							} catch (Exception e) {
+
+							}
+						} else {
+							// there is a pawn in the same row and it cannot be crossed
+							break;
+						}
+					}
+				}
+
+			}
+		}
+		return possibleActions;
+	}
+
+    /**
+     * Transforms the passed <tt>state</tt> into a {@link VisitableLinkedTreeNode}
+     * and computes a list of al possible actions and reachable states
+     * starting from the <tt>state</tt> putting them into the leaves of the created
+     * tree node
+     * @param state the state to transform and analyze
+     * @return a {@link VisitableLinkedTreeNode} that has all the possible
+     * {@link ReachableState} starting from the <tt>state</tt> into the leaves
+     */
+	public List<TreeNode<HeuristicVisitable<ReachableState>>> generateLeaves(
+			State state) {
+		return generateLeaves(
+				new LinkedTreeNode<>(
+						new HeuristicVisitable<>(new ReachableState(state))));
+	}
+
+    /**
+     * Computes a list of al possible actions and reachable states
+     * starting from the state present into the <tt>node</tt> passed
+     * as argument putting them into its leaves
+     * @param node the node that has the start state and in which to put those
+     *             computed
+     * @return the {@link List} of the generated leaves
+     */
+	@Override
+	public List<TreeNode<HeuristicVisitable<ReachableState>>> generateLeaves(
+			TreeNode<HeuristicVisitable<ReachableState>> node) {
+		State state = node.getDroplet().getObject().getState();
+		State.Turn turn = state.getTurn();
+
+		for (int i = 0; i < state.getBoard().length; i++) {
+			for (int j = 0; j < state.getBoard().length; j++) {
+
+				// if pawn color  is equal of turn color
+				if (state.getPawn(i, j).toString().equals(turn.toString()) ||
+						(state.getPawn(i, j).equals(State.Pawn.KING) && turn.equals(State.Turn.WHITE)) ) {
+
+					// search on top of pawn
+					for (int k=i-1; k>=0; k--) {
+
+						// break if pawn is out of citadels and it is moving on a citadel
+						if (!citadels.contains(state.getBox(i, j)) && citadels.contains(state.getBox(k, j))) {
+							break;
+						}
+
+						// check if we are moving on a empty cell
+						else if (state.getPawn(k, j).equalsPawn(State.Pawn.EMPTY.toString())) {
+
+							String from = state.getBox(i, j);
+							String to = state.getBox(k, j);
+
+							Action action = null;
+							try {
+								action = new Action(from, to, turn);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+
+							// check if action is admissible and if it is, add it to list possibleActions
+							try {
+								checkMove(state.clone(), action);
+								node.newLeaf(new HeuristicVisitable<>(new ReachableState(action, state)));
+
+							} catch (Exception e) {}
+						} else {
+							// there is a pawn in the same column and it cannot be crossed
+							break;
+						}
+					}
+
+					// search on bottom of pawn
+					for (int k=i+1; k<state.getBoard().length; k++) {
+
+						// break if pawn is out of citadels and it is moving on a citadel
+						if (!citadels.contains(state.getBox(i, j)) && citadels.contains(state.getBox(k, j))) {
+							break;
+						}
+
+						// check if we are moving on a empty cell
+						else if (state.getPawn(k, j).equalsPawn(State.Pawn.EMPTY.toString())){
+
+							String from = state.getBox(i, j);
+							String to = state.getBox(k, j);
+
+							Action action = null;
+							try {
+								action = new Action(from, to, turn);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+
+							// check if action is admissible and if it is, add it to list possibleActions
+							try {
+								checkMove(state.clone(), action);
+								node.newLeaf(new HeuristicVisitable<>(new ReachableState(action, state)));
+							} catch (Exception e) {}
+						} else {
+							// there is a pawn in the same column and it cannot be crossed
+							break;
+						}
+					}
+
+					// search on left of pawn
+					for (int k=j-1; k>=0; k--) {
+						// break if pawn is out of citadels and it is moving on a citadel
+						if (!citadels.contains(state.getBox(i, j)) && citadels.contains(state.getBox(i, k))) {
+							break;
+						}
+
+						// check if we are moving on a empty cell
+						else if (state.getPawn(i, k).equalsPawn(State.Pawn.EMPTY.toString())){
+
+							String from = state.getBox(i, j);
+							String to = state.getBox(i, k);
+
+							Action action = null;
+							try {
+								action = new Action(from, to, turn);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+
+							// check if action is admissible and if it is, add it to list possibleActions
+							try {
+								checkMove(state.clone(), action);
+								node.newLeaf(new HeuristicVisitable<>(new ReachableState(action, state)));
+
+							} catch (Exception e) {}
+						} else {
+							// there is a pawn in the same row and it cannot be crossed
+							break;
+						}
+					}
+
+					// search on right of pawn
+					for (int k=j+1; k<state.getBoard().length; k++) {
+
+
+						// break if pawn is out of citadels and it is moving on a citadel
+						if (!citadels.contains(state.getBox(i, j)) && citadels.contains(state.getBox(i, k))) {
+							break;
+						}
+
+						// check if we are moving on a empty cell
+						else if (state.getPawn(i, k).equalsPawn(State.Pawn.EMPTY.toString())){
+
+							String from = state.getBox(i, j);
+							String to = state.getBox(i, k);
+
+							Action action = null;
+							try {
+								action = new Action(from, to, turn);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+
+							// check if action is admissible and if it is, add it to list possibleActions
+							try {
+								checkMove(state.clone(), action);
+								node.newLeaf(new HeuristicVisitable<>(new ReachableState(action, state)));
+							} catch (Exception e) {
+
+							}
+						} else {
+							// there is a pawn in the same row and it cannot be crossed
+							break;
+						}
+					}
+				}
+
+			}
+		}
+		return node.getLeaves();
 	}
 
 
